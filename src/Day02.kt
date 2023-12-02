@@ -1,12 +1,12 @@
 data class Game(val id: Int, val rounds: List<GameRound>)
-data class GameRound(val draws: List<Draw>)
-data class Draw(var value: Int, val color: String)
+data class GameRound(val picks: List<Pick>)
+data class Pick(var value: Int, val color: String)
 
 fun main() {
     fun part1(input: List<Game>): Int = input.filter {
         it.rounds.all {
-            val groups = it.draws
-                .groupBy(Draw::color, Draw::value)
+            val groups = it.picks
+                .groupBy(Pick::color, Pick::value)
                 .mapValues { it.value.sum() }
 
             val red = groups["red"] ?: 0
@@ -19,8 +19,8 @@ fun main() {
 
     fun part2(input: List<Game>): Int = input.sumOf {
         val groups = it.rounds
-            .flatMap { it.draws }
-            .groupBy(Draw::color, Draw::value)
+            .flatMap { it.picks }
+            .groupBy(Pick::color, Pick::value)
             .mapValues { it.value.max() }
 
         val red = groups["red"] ?: 0
@@ -48,9 +48,9 @@ fun List<String>.parseGames(): List<Game> {
             .map { round ->
                 val picks = round
                     .split(',')
-                    .map { draw ->
-                        val (value, color) = draw.trim().split(' ', limit = 2)
-                        Draw(value.toInt(), color)
+                    .map { pick ->
+                        val (value, color) = pick.trim().split(' ', limit = 2)
+                        Pick(value.toInt(), color)
                     }
                 GameRound(picks)
             }
