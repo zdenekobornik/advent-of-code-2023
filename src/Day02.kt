@@ -1,40 +1,33 @@
-data class Game(
-    val id: Int,
-    val rounds: List<GameRound>
-)
-data class GameRound(
-    val draws: List<Draw>
-)
-data class Draw(
-    var value: Int,
-    val color: String
-)
+data class Game(val id: Int, val rounds: List<GameRound>)
+data class GameRound(val draws: List<Draw>)
+data class Draw(var value: Int, val color: String)
 
 fun main() {
-    fun part1(input: List<Game>): Int {
-        val filtered = input.filter {
-            it.rounds.all {
-                it.draws.filter { it.color == "red" }.sumOf { it.value } <= 12 &&
-                it.draws.filter { it.color == "green" }.sumOf { it.value } <= 13 &&
-                it.draws.filter { it.color == "blue" }.sumOf { it.value } <= 14
-            }
+    fun part1(input: List<Game>): Int = input.filter {
+        it.rounds.all {
+            val groups = it.draws
+                .groupBy(Draw::color, Draw::value)
+                .mapValues { it.value.sum() }
+
+            val red = groups["red"] ?: 0
+            val green = groups["green"] ?: 0
+            val blue = groups["blue"] ?: 0
+
+            red <= 12 && green <= 13 && blue <= 14
         }
+    }.sumOf { it.id }
 
-        return filtered.sumOf { it.id }
-    }
+    fun part2(input: List<Game>): Int = input.sumOf {
+        val groups = it.rounds
+            .flatMap { it.draws }
+            .groupBy(Draw::color, Draw::value)
+            .mapValues { it.value.max() }
 
-    fun part2(input: List<Game>): Int {
-        val filtered = input.sumOf {
-            val draws = it.rounds.flatMap { it.draws }
+        val red = groups["red"] ?: 0
+        val green = groups["green"] ?: 0
+        val blue = groups["blue"] ?: 0
 
-            val red = draws.filter { it.color == "red" }.maxOf { it.value }
-            val green = draws.filter { it.color == "green" }.maxOf { it.value }
-            val blue = draws.filter { it.color == "blue" }.maxOf { it.value }
-
-            red * green * blue
-        }
-
-        return filtered
+        red * green * blue
     }
 
     // test if implementation meets criteria from the description, like:
@@ -49,18 +42,19 @@ fun main() {
 
 fun List<String>.parseGames(): List<Game> {
     return map {
-        val gameInfo = it.split(':', ' ', limit = 3)
-        val gameId = gameInfo[1].toInt()
-        val rounds  = gameInfo[2]
+        val (_, gameId, allRounds) = it.split(':', ' ', limit = 3)
+        val rounds = allRounds
             .split(';')
-            .map {
-                val picks = it.split(',').map {
-                    val (value, color) = it.trim().split(' ')
-                    Draw(value.toInt(), color)
-                }
+            .map { round ->
+                val picks = round
+                    .split(',')
+                    .map { draw ->
+                        val (value, color) = draw.trim().split(' ', limit = 2)
+                        Draw(value.toInt(), color)
+                    }
                 GameRound(picks)
             }
 
-        Game(gameId, rounds)
+        Game(gameId.toInt(), rounds)
     }
 }
