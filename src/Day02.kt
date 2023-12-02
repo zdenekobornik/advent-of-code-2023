@@ -1,31 +1,15 @@
 data class Game(val id: Int, val rounds: List<GameRound>)
-data class GameRound(val picks: List<Pick>)
-data class Pick(var value: Int, val color: String)
+data class GameRound(val red: Int, val green: Int, val blue: Int)
 
 fun main() {
-    fun part1(input: List<Game>): Int = input.filter {
-        it.rounds.all {
-            val groups = it.picks
-                .groupBy(Pick::color, Pick::value)
-                .mapValues { it.value.sum() }
-
-            val red = groups["red"] ?: 0
-            val green = groups["green"] ?: 0
-            val blue = groups["blue"] ?: 0
-
-            red <= 12 && green <= 13 && blue <= 14
-        }
-    }.sumOf { it.id }
+    fun part1(input: List<Game>): Int = input
+        .filter { it.rounds.all { it.red <= 12 && it.green <= 13 && it.blue <= 14 } }
+        .sumOf { it.id }
 
     fun part2(input: List<Game>): Int = input.sumOf {
-        val groups = it.rounds
-            .flatMap { it.picks }
-            .groupBy(Pick::color, Pick::value)
-            .mapValues { it.value.max() }
-
-        val red = groups["red"] ?: 0
-        val green = groups["green"] ?: 0
-        val blue = groups["blue"] ?: 0
+        val red = it.rounds.maxOf { it.red }
+        val green = it.rounds.maxOf { it.green }
+        val blue = it.rounds.maxOf { it.blue }
 
         red * green * blue
     }
@@ -40,21 +24,20 @@ fun main() {
     part2(input).println()
 }
 
-fun List<String>.parseGames(): List<Game> {
-    return map {
-        val (_, gameId, allRounds) = it.split(':', ' ', limit = 3)
-        val rounds = allRounds
-            .split(';')
-            .map { round ->
-                val picks = round
-                    .split(',')
-                    .map { pick ->
-                        val (value, color) = pick.trim().split(' ', limit = 2)
-                        Pick(value.toInt(), color)
-                    }
-                GameRound(picks)
-            }
+fun List<String>.parseGames(): List<Game> = map {
+    val (_, gameId, allRounds) = it.split(':', ' ', limit = 3)
+    val rounds = allRounds
+        .split(';')
+        .map { round ->
+            val picks = round
+                .split(',')
+                .associate {
+                    val (number, color) = it.trim().split(' ', limit = 2)
+                    color to number.toInt()
+                }
 
-        Game(gameId.toInt(), rounds)
-    }
+            GameRound(picks["red"] ?: 0, picks["green"] ?: 0, picks["blue"] ?: 0)
+        }
+
+    Game(gameId.toInt(), rounds)
 }
