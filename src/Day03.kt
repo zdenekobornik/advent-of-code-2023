@@ -13,9 +13,7 @@ fun List<String>.adjacentDigits(y: Int, x: Int) = listOf(
     y - 1 to x + 1,
     y + 1 to x - 1,
     y + 1 to x + 1,
-)
-    .filter { (y, x) -> y in 0..this[y].lastIndex && x in 0..this.lastIndex }
-    .filter { (y, x) -> this[y][x].isDigit() }
+).filter { (y, x) -> y in 0..this[y].lastIndex && x in 0..this.lastIndex && this[y][x].isDigit() }
 
 fun List<String>.findPossibleNumber(y: Int, x: Int): Number {
     val startX = (x - 1 downTo 0)
