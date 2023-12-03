@@ -1,6 +1,10 @@
 data class Number(val number: Int, val y: Int, val startX: Int, val endX: Int)
 
-fun List<String>.validPositionsFor(y: Int, x: Int) = listOf(
+fun List<String>.allPositions(): List<Pair<Int, Int>> = this.indices.flatMap { y ->
+    this[y].indices.map { y to it }
+}
+
+fun List<String>.adjacentDigits(y: Int, x: Int) = listOf(
     y to x - 1,
     y - 1 to x,
     y to x + 1,
@@ -9,38 +13,23 @@ fun List<String>.validPositionsFor(y: Int, x: Int) = listOf(
     y - 1 to x + 1,
     y + 1 to x - 1,
     y + 1 to x + 1,
-).filter {
-    it.first in 0..this[y].lastIndex && it.second in 0..this.lastIndex
-}
+)
+    .filter { (y, x) -> y in 0..this[y].lastIndex && x in 0..this.lastIndex }
+    .filter { (y, x) -> this[y][x].isDigit() }
 
-fun List<String>.findPossibleNumber(y: Int, x: Int): Number? {
-    if (!this[y][x].isDigit()) return null
-
+fun List<String>.findPossibleNumber(y: Int, x: Int): Number {
     var startX = x
     var endX = x
     var currentNumberString = this[y][x].toString()
 
-    if (x > 0) {
-        for (cur in x - 1 downTo 0) {
-            if (this[y][cur].isDigit()) {
-                currentNumberString = this[y][cur] + currentNumberString
-                startX = cur
-            } else {
-                break
-            }
-        }
+    while (startX > 0 && this[y][startX - 1].isDigit()) {
+        currentNumberString = this[y][startX - 1] + currentNumberString
+        startX -= 1
     }
 
-
-    if (x < this[y].lastIndex) {
-        for (cur in x + 1..this[y].lastIndex) {
-            if (this[y][cur].isDigit()) {
-                endX = cur
-                currentNumberString = currentNumberString + this[y][cur]
-            } else {
-                break
-            }
-        }
+    while (endX < this[y].lastIndex && this[y][endX + 1].isDigit()) {
+        currentNumberString += this[y][endX + 1]
+        endX += 1
     }
 
     return Number(currentNumberString.toInt(), y, startX, endX)
@@ -48,41 +37,25 @@ fun List<String>.findPossibleNumber(y: Int, x: Int): Number? {
 
 fun main() {
 
-    fun part1(input: List<String>): Int {
-        var finalScore = 0
-
-        for (y in input.indices) {
-            for (x in 0 until input[y].length) {
-                if (!input[y][x].isDigit() && input[y][x] != '.') {
-                    finalScore += input.validPositionsFor(y, x)
-                        .mapNotNull { (y, x) -> input.findPossibleNumber(y, x) }
-                        .distinct()
-                        .sumOf { it.number }
-                }
-            }
+    fun part1(input: List<String>): Int = input.allPositions()
+        .filter { (y, x) -> !input[y][x].isDigit() && input[y][x] != '.' }
+        .sumOf { (y, x) ->
+            input.adjacentDigits(y, x)
+                .map { (y, x) -> input.findPossibleNumber(y, x) }
+                .distinct()
+                .sumOf { it.number }
         }
 
-        return finalScore
-    }
-
-    fun part2(input: List<String>): Int {
-        var finalScore = 0
-
-        for (y in input.indices) {
-            for (x in 0 until input[y].length) {
-                if (input[y][x] == '*') {
-                    finalScore += input.validPositionsFor(y, x)
-                        .mapNotNull { (y, x) -> input.findPossibleNumber(y, x) }
-                        .distinct()
-                        .takeIf { it.size == 2 }
-                        ?.map { it.number }
-                        ?.reduce { acc, i -> acc * i } ?: 0
-                }
-            }
+    fun part2(input: List<String>): Int = input.allPositions()
+        .filter { (y, x) -> input[y][x] == '*' }
+        .sumOf { (y, x) ->
+            input.adjacentDigits(y, x)
+                .map { (y, x) -> input.findPossibleNumber(y, x) }
+                .distinct()
+                .takeIf { it.size == 2 }
+                ?.map { it.number }
+                ?.reduce { acc, i -> acc * i } ?: 0
         }
-
-        return finalScore
-    }
 
     // test if implementation meets criteria from the description, like:
     val testInput = readInput("Day03_test")
