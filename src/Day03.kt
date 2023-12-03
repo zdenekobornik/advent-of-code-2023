@@ -18,21 +18,15 @@ fun List<String>.adjacentDigits(y: Int, x: Int) = listOf(
     .filter { (y, x) -> this[y][x].isDigit() }
 
 fun List<String>.findPossibleNumber(y: Int, x: Int): Number {
-    var startX = x
-    var endX = x
-    var currentNumberString = this[y][x].toString()
+    val startX = (x - 1 downTo 0)
+        .takeWhile { this[y][it].isDigit() }
+        .lastOrNull() ?: x
+    val endX = (x + 1..this[y].lastIndex)
+        .takeWhile { this[y][it].isDigit() }
+        .lastOrNull() ?: x
+    val number = this[y].substring(startX..endX).toInt()
 
-    while (startX > 0 && this[y][startX - 1].isDigit()) {
-        currentNumberString = this[y][startX - 1] + currentNumberString
-        startX -= 1
-    }
-
-    while (endX < this[y].lastIndex && this[y][endX + 1].isDigit()) {
-        currentNumberString += this[y][endX + 1]
-        endX += 1
-    }
-
-    return Number(currentNumberString.toInt(), y, startX, endX)
+    return Number(number, y, startX, endX)
 }
 
 fun main() {
